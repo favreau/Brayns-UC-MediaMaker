@@ -89,39 +89,35 @@ void MediaMakerPlugin::preRender()
 
     if (_exportFramesToDiskDirty && _accumulationFrameNumber == 0)
     {
-        const auto &ai = _exportFramesToDiskPayload.animationInformation;
-        if (_frameNumber >= ai.size())
-            _exportFramesToDiskDirty = false;
-        else
-        {
-            const uint64_t i = 12 * _frameNumber;
-            // Camera position
-            CameraDefinition cd;
-            const auto &ci = _exportFramesToDiskPayload.cameraInformation;
-            cd.origin = {ci[i], ci[i + 1], ci[i + 2]};
-            cd.direction = {ci[i + 3], ci[i + 4], ci[i + 5]};
-            cd.up = {ci[i + 6], ci[i + 7], ci[i + 8]};
-            cd.apertureRadius = ci[i + 9];
-            cd.focusDistance = ci[i + 10];
-            cd.interpupillaryDistance = ci[i + 11];
-            _setCamera(cd);
+        const uint64_t i = 12 * _frameNumber;
+        // Camera position
+        CameraDefinition cd;
+        const auto &ci = _exportFramesToDiskPayload.cameraInformation;
+        cd.origin = {ci[i], ci[i + 1], ci[i + 2]};
+        cd.direction = {ci[i + 3], ci[i + 4], ci[i + 5]};
+        cd.up = {ci[i + 6], ci[i + 7], ci[i + 8]};
+        cd.apertureRadius = ci[i + 9];
+        cd.focusDistance = ci[i + 10];
+        cd.interpupillaryDistance = ci[i + 11];
+        _setCamera(cd);
 
-            // Animation parameters
-            _api->getParametersManager().getAnimationParameters().setFrame(ai[_frameNumber]);
-        }
+        // Animation parameters
+        const auto &ai = _exportFramesToDiskPayload.animationInformation;
+        _api->getParametersManager().getAnimationParameters().setFrame(ai[_frameNumber]);
     }
 }
 
 void MediaMakerPlugin::postRender()
 {
+    ++_accumulationFrameNumber;
     if (_exportFramesToDiskDirty && _accumulationFrameNumber == _exportFramesToDiskPayload.spp)
     {
         _doExportFrameToDisk();
         ++_frameNumber;
         _accumulationFrameNumber = 0;
+        _exportFramesToDiskDirty =
+            (_frameNumber < (_exportFramesToDiskPayload.animationInformation.size() - _exportFramesToDiskPayload.startFrame));
     }
-    else
-        ++_accumulationFrameNumber;
 }
 
 void MediaMakerPlugin::_setCamera(const CameraDefinition &payload)
@@ -176,6 +172,7 @@ CameraDefinition MediaMakerPlugin::_getCamera()
 
 void MediaMakerPlugin::_doExportFrameToDisk()
 {
+    PLUGIN_WARN << "MediaMakerPlugin::_doExportFrameToDisk" << std::endl;
     auto &frameBuffer = _api->getEngine().getFrameBuffer();
     auto image = frameBuffer.getImage();
     auto fif =
@@ -234,11 +231,17 @@ void MediaMakerPlugin::_exportFramesToDisk(const ExportFramesToDisk &payload)
 FrameExportProgress MediaMakerPlugin::_getFrameExportProgress()
 {
     FrameExportProgress result;
+    float percentage = 1.f;
     const size_t totalNumberOfFrames =
         (_exportFramesToDiskPayload.animationInformation.size() - _exportFramesToDiskPayload.startFrame) * _exportFramesToDiskPayload.spp;
-    const float currentProgress = _frameNumber * _exportFramesToDiskPayload.spp + _accumulationFrameNumber;
 
-    result.progress = currentProgress / float(totalNumberOfFrames);
+    if (totalNumberOfFrames != 0)
+    {
+        const float currentProgress = _frameNumber * _exportFramesToDiskPayload.spp + _accumulationFrameNumber;
+        percentage = currentProgress / float(totalNumberOfFrames);
+    }
+    result.progress = percentage;
+    result.done = !_exportFramesToDiskDirty;
     return result;
 }
 

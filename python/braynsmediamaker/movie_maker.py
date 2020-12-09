@@ -25,7 +25,6 @@
 """Provides a class that ease the definition of smoothed camera paths"""
 
 from brayns import Client
-from ipywidgets import IntSlider
 from IPython.display import display
 
 class MovieMaker:
@@ -49,6 +48,7 @@ class MovieMaker:
         ups = list()
         aperture_radii = list()
         focus_distances = list()
+        self._smoothed_key_frames.clear()
 
         for s in range(len(control_points) - 1):
 
@@ -209,14 +209,6 @@ class MovieMaker:
         params['cameraInformation'] = values
         self._client.rockets_client.request('export-frames-to-disk', params)
 
-        # Wait until all frames are rendered
-        while self.get_export_frames_progress()['progress'] < 1.0:
-            import time
-            time.sleep(1)
-
-        # Set back-end not to export frames anymore
-        self.cancel_frames_export()
-
     def get_export_frames_progress(self):
         """
         Queries the progress of the last export of frames to disk request
@@ -247,6 +239,7 @@ class MovieMaker:
         """
         Displays a widget giving access to the movie frames
         """
+        from ipywidgets import IntSlider
         frame = IntSlider(description='frame', min=0, max=self.get_nb_frames()-1)
         
         def update_frame(args):
@@ -268,3 +261,83 @@ class MovieMaker:
 
         frame.observe(update_frame, 'value')
         display(frame)
+
+    def create_snapshot(self, size, output_folder, samples_per_pixel):
+
+        from ipywidgets import IntProgress
+
+        application_params = self._client.get_application_parameters()
+        renderer_params = self._client.get_renderer()
+        old_image_stream_fps = application_params['image_stream_fps']
+        old_viewport_size = application_params['viewport']
+        old_samples_per_pixel = renderer_params['samples_per_pixel']
+        old_max_accum_frames = renderer_params['max_accum_frames']
+        self._client.set_renderer(samples_per_pixel=1, max_accum_frames=samples_per_pixel)
+        self._client.set_application_parameters(viewport=size)
+        self._client.set_application_parameters(image_stream_fps=0)
+
+        control_points = [self.get_camera()]
+        current_animation_frame = int(self._client.get_animation_parameters()['current'])
+        animation_frames = [current_animation_frame]
+        self.build_camera_path(control_points=control_points, nb_steps_between_control_points=1,
+                                            smoothing_size=1)
+
+        progress_widget = IntProgress(description='In progress...', min=0, max=100, value=0)
+        display(progress_widget)
+
+        self.export_frames(path=output_folder, animation_frames=animation_frames, size=size, samples_per_pixel=samples_per_pixel)
+
+        done = False
+        while not done:
+            import time
+            time.sleep(0.2)
+            progress = self.get_export_frames_progress()['progress']
+            progress_widget.value = progress * 100
+            done = self.get_export_frames_progress()['done']
+
+        self._client.set_application_parameters(image_stream_fps=old_image_stream_fps,
+                                                viewport=old_viewport_size)
+        self._client.set_renderer(samples_per_pixel=old_samples_per_pixel,
+                                  max_accum_frames=old_max_accum_frames)
+
+        progress_widget.description = 'Done'
+        progress_widget.value = 100
+
+    def create_movie(self, path, size, image_format='png', animation_frames=list(), 
+                     quality=100, samples_per_pixel=1, start_frame=0, interpupillary_distance=0.0):
+
+        from ipywidgets import IntProgress
+
+        application_params = self._client.get_application_parameters()
+        renderer_params = self._client.get_renderer()
+
+        old_image_stream_fps = application_params['image_stream_fps']
+        old_viewport_size = application_params['viewport']
+        old_samples_per_pixel = renderer_params['samples_per_pixel']
+        old_max_accum_frames = renderer_params['max_accum_frames']
+        self._client.set_renderer(samples_per_pixel=1, max_accum_frames=samples_per_pixel)
+        self._client.set_application_parameters(viewport=size)
+        self._client.set_application_parameters(image_stream_fps=0)
+
+        progress_widget = IntProgress(description='In progress...', min=0, max=100, value=0)
+        display(progress_widget)
+
+        self.export_frames(path=path, animation_frames=animation_frames, start_frame=start_frame,
+            size=size, samples_per_pixel=samples_per_pixel, quality=quality, 
+            interpupillary_distance=interpupillary_distance)
+
+        done = False
+        while not done:
+            import time
+            time.sleep(0.2)
+            progress = self.get_export_frames_progress()['progress']
+            progress_widget.value = progress * 100
+            done = self.get_export_frames_progress()['done']
+
+        self._client.set_application_parameters(image_stream_fps=old_image_stream_fps,
+                                                viewport=old_viewport_size)
+        self._client.set_renderer(samples_per_pixel=old_samples_per_pixel,
+                                  max_accum_frames=old_max_accum_frames)
+
+        progress_widget.description = 'Done'
+        progress_widget.value = 100

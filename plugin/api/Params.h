@@ -21,39 +21,45 @@
 #include <string>
 #include <vector>
 
-namespace mediamaker {
+namespace mediamaker
+{
 // Response
-struct Response {
-  bool status{true};
-  std::string contents;
+struct Response
+{
+    bool status{true};
+    std::string contents;
 };
 std::string to_json(const Response &param);
 
 // Movies and frames
-struct CameraDefinition {
-  std::vector<double> origin;
-  std::vector<double> direction;
-  std::vector<double> up;
-  double apertureRadius;
-  double focusDistance;
-  double interpupillaryDistance;
+struct CameraDefinition
+{
+    std::vector<double> origin;
+    std::vector<double> direction;
+    std::vector<double> up;
+    double apertureRadius;
+    double focusDistance;
+    double interpupillaryDistance;
 };
 bool from_json(CameraDefinition &param, const std::string &payload);
 std::string to_json(const CameraDefinition &param);
 
-struct ExportFramesToDisk {
-  std::string path;
-  std::string format;
-  uint16_t quality{100};
-  uint16_t spp{0};
-  uint16_t startFrame{0};
-  std::vector<uint64_t> animationInformation;
-  std::vector<double> cameraInformation;
+struct ExportFramesToDisk
+{
+    std::string path;
+    std::string format;
+    uint16_t quality{100};
+    uint16_t spp{0};
+    uint16_t startFrame{0};
+    std::vector<uint64_t> animationInformation;
+    std::vector<double> cameraInformation;
 };
 bool from_json(ExportFramesToDisk &param, const std::string &payload);
 
-struct FrameExportProgress {
-  float progress;
+struct FrameExportProgress
+{
+    float progress;
+    bool done;
 };
 std::string to_json(const FrameExportProgress &exportProgress);
 

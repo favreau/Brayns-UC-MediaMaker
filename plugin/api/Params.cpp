@@ -117,6 +117,7 @@ std::string to_json(const FrameExportProgress &exportProgress)
     {
         nlohmann::json json;
         TO_JSON(exportProgress, json, progress);
+        TO_JSON(exportProgress, json, done);
         return json.dump();
     }
     catch (...)
