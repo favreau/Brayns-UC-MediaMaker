@@ -162,7 +162,7 @@ void MediaMakerPlugin::_setCamera(const CameraDefinition &payload)
     camera.updateProperty("focusDistance", payload.focusDistance);
 
     // Stereo
-    camera.updateProperty("stereo", payload.focusDistance != 0.0);
+    camera.updateProperty("stereo", payload.interpupillaryDistance != 0.0);
     camera.updateProperty("interpupillaryDistance", payload.interpupillaryDistance);
 
     _api->getCamera().markModified();
