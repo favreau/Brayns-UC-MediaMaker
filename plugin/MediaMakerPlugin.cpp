@@ -118,9 +118,12 @@ void MediaMakerPlugin::postRender()
 
     if (_exportFramesToDiskDirty)
     {
-        _doExportFrameToDisk();
+        if (_exportFramesToDiskPayload.exportIntermediateFrames)
+            _doExportFrameToDisk();
+
         if (_accumulationFrameNumber == _exportFramesToDiskPayload.spp)
         {
+            _doExportFrameToDisk();
             ++_frameNumber;
             _accumulationFrameNumber = 0;
             const size_t nbFrames = _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE;

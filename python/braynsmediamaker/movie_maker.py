@@ -154,7 +154,7 @@ class MovieMaker:
 
     def export_frames(self, path, size, image_format='png',
                       animation_frames=list(), quality=100, samples_per_pixel=1, start_frame=0,
-                      interpupillary_distance=0.0):
+                      interpupillary_distance=0.0, exportIntermediateFrames=False):
         """
         Exports frames to disk. Frames are named using a 6 digit representation of the frame number
 
@@ -163,6 +163,7 @@ class MovieMaker:
         @param quality: Quality of the exported image (Between 0 and 100)
         @param samples_per_pixel: Number of samples per pixels
         @param start_frame: Optional value if the rendering should start at a specific frame.
+        @param exportIntermediateFrames: Exports intermediate frames (for every sample per pixel)
         @param interpupillary_distance: Distance between pupils. Stereo mode is activated if different from zero
         This is used to resume the rendering of a previously canceled sequence)
         @return: Result of the request submission
@@ -189,6 +190,7 @@ class MovieMaker:
         params['quality'] = quality
         params['spp'] = samples_per_pixel
         params['startFrame'] = start_frame
+        params['exportIntermediateFrames'] = exportIntermediateFrames
         params['animationInformation'] = animation_frames
         values = list()
         for camera_definition in camera_definitions:
@@ -233,6 +235,7 @@ class MovieMaker:
         params['quality'] = 100
         params['spp'] = 1
         params['startFrame'] = 0
+        params['exportIntermediateFrames'] = False
         params['animationInformation'] = []
         params['cameraInformation'] = []
         return self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'export-frames-to-disk', params)
@@ -264,7 +267,7 @@ class MovieMaker:
         frame.observe(update_frame, 'value')
         display(frame)
 
-    def create_snapshot(self, size, output_folder, samples_per_pixel):
+    def create_snapshot(self, size, output_folder, samples_per_pixel, exportIntermediateFrames=True):
 
         from ipywidgets import IntProgress
 
@@ -306,7 +309,7 @@ class MovieMaker:
         progress_widget.value = 100
 
     def create_movie(self, path, size, image_format='png', animation_frames=list(), 
-                     quality=100, samples_per_pixel=1, start_frame=0, interpupillary_distance=0.0):
+                     quality=100, samples_per_pixel=1, start_frame=0, interpupillary_distance=0.0, exportIntermediateFrames=True):
 
         from ipywidgets import IntProgress
 
@@ -326,7 +329,7 @@ class MovieMaker:
 
         self.export_frames(path=path, animation_frames=animation_frames, start_frame=start_frame,
             size=size, samples_per_pixel=samples_per_pixel, quality=quality, 
-            interpupillary_distance=interpupillary_distance)
+            interpupillary_distance=interpupillary_distance, exportIntermediateFrames=exportIntermediateFrames)
 
         done = False
         while not done:
