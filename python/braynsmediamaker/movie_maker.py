@@ -30,6 +30,8 @@ from IPython.display import display
 class MovieMaker:
     """ Movie maker """
 
+    PLUGIN_API_PREFIX = 'mm_'
+
     def __init__(self, brayns):
         assert isinstance(brayns, Client)
         self._client = brayns
@@ -140,7 +142,7 @@ class MovieMaker:
         params['origin'] = origin
         params['direction'] = direction
         params['up'] = up
-        return self._client.rockets_client.request('set-odu-camera', params)
+        return self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'set-odu-camera', params)
 
     def get_camera(self):
         """
@@ -148,7 +150,7 @@ class MovieMaker:
 
         @return: A JSon representation of the origin, direction and up vectors
         """
-        return self._client.rockets_client.request('get-odu-camera')
+        return self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'get-odu-camera')
 
     def export_frames(self, path, size, image_format='png',
                       animation_frames=list(), quality=100, samples_per_pixel=1, start_frame=0,
@@ -207,7 +209,7 @@ class MovieMaker:
             values.append(interpupillary_distance)
 
         params['cameraInformation'] = values
-        self._client.rockets_client.request('export-frames-to-disk', params)
+        self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'export-frames-to-disk', params)
 
     def get_export_frames_progress(self):
         """
@@ -217,7 +219,7 @@ class MovieMaker:
         the last written-to-disk frame, and "done", a boolean flag stating wether
         the exporting is finished or is still in progress
         """
-        return self._client.rockets_client.request('get-export-frames-progress')
+        return self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'get-export-frames-progress')
 
     def cancel_frames_export(self):
         """
@@ -233,7 +235,7 @@ class MovieMaker:
         params['startFrame'] = 0
         params['animationInformation'] = []
         params['cameraInformation'] = []
-        return self._client.rockets_client.request('export-frames-to-disk', params)
+        return self._client.rockets_client.request(self.PLUGIN_API_PREFIX + 'export-frames-to-disk', params)
 
     def display(self, camera_params=None):
         """

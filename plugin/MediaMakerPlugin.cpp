@@ -35,6 +35,7 @@ namespace mediamaker
 using namespace brayns;
 
 const std::string PLUGIN_VERSION = "0.1.0";
+const std::string PLUGIN_API_PREFIX = "mm_";
 
 // Number of floats used to define the camera
 const size_t CAMERA_DEFINITION_SIZE = 12;
@@ -58,21 +59,25 @@ void MediaMakerPlugin::init()
 
     if (actionInterface)
     {
-        PLUGIN_INFO << "Registering 'version' endpoint" << std::endl;
-        actionInterface->registerRequest<Response>("version", [&]() { return _version(); });
+        std::string entryPoint = PLUGIN_API_PREFIX + "version";
+        PLUGIN_INFO << "Registering '" + entryPoint + "' endpoint" << std::endl;
+        actionInterface->registerRequest<Response>(entryPoint, [&]() { return _version(); });
 
-        PLUGIN_INFO << "Registering 'set-odu-camera' endpoint" << std::endl;
-        actionInterface->registerNotification<CameraDefinition>("set-odu-camera", [&](const CameraDefinition &s) { _setCamera(s); });
+        entryPoint = PLUGIN_API_PREFIX + "set-odu-camera";
+        PLUGIN_INFO << "Registering '" + entryPoint + "' endpoint" << std::endl;
+        actionInterface->registerNotification<CameraDefinition>(entryPoint, [&](const CameraDefinition &s) { _setCamera(s); });
 
-        PLUGIN_INFO << "Registering 'get-odu-camera' endpoint" << std::endl;
-        actionInterface->registerRequest<CameraDefinition>("get-odu-camera", [&]() -> CameraDefinition { return _getCamera(); });
+        entryPoint = PLUGIN_API_PREFIX + "get-odu-camera";
+        PLUGIN_INFO << "Registering '" + entryPoint + "' endpoint" << std::endl;
+        actionInterface->registerRequest<CameraDefinition>(entryPoint, [&]() -> CameraDefinition { return _getCamera(); });
 
-        PLUGIN_INFO << "Registering 'export-frames-to-disk' endpoint" << std::endl;
-        actionInterface->registerNotification<ExportFramesToDisk>("export-frames-to-disk",
-                                                                  [&](const ExportFramesToDisk &s) { _exportFramesToDisk(s); });
+        entryPoint = PLUGIN_API_PREFIX + "export-frames-to-disk";
+        PLUGIN_INFO << "Registering '" + entryPoint + "' endpoint" << std::endl;
+        actionInterface->registerNotification<ExportFramesToDisk>(entryPoint, [&](const ExportFramesToDisk &s) { _exportFramesToDisk(s); });
 
-        PLUGIN_INFO << "Registering 'get-export-frames-progress' endpoint" << std::endl;
-        actionInterface->registerRequest<FrameExportProgress>("get-export-frames-progress",
+        entryPoint = PLUGIN_API_PREFIX + "get-export-frames-progress";
+        PLUGIN_INFO << "Registering '" + entryPoint + "' endpoint" << std::endl;
+        actionInterface->registerRequest<FrameExportProgress>(entryPoint,
                                                               [&](void) -> FrameExportProgress { return _getFrameExportProgress(); });
     }
 }
