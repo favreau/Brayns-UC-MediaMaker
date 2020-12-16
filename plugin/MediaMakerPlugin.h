@@ -50,8 +50,5 @@ private:
     void _exportFramesToDisk(const ExportFramesToDisk &payload);
     FrameExportProgress _getFrameExportProgress();
     void _doExportFrameToDisk();
-
-    // Scene
-    bool _dirty{false};
 };
 } // namespace mediamaker

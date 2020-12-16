@@ -36,6 +36,9 @@ using namespace brayns;
 
 const std::string PLUGIN_VERSION = "0.1.0";
 
+// Number of floats used to define the camera
+const size_t CAMERA_DEFINITION_SIZE = 12;
+
 #define CATCH_STD_EXCEPTION()                  \
     catch (const std::runtime_error &e)        \
     {                                          \
@@ -83,13 +86,9 @@ Response MediaMakerPlugin::_version() const
 
 void MediaMakerPlugin::preRender()
 {
-    if (_dirty)
-        _api->getScene().markModified();
-    _dirty = false;
-
     if (_exportFramesToDiskDirty && _accumulationFrameNumber == 0)
     {
-        const uint64_t i = 12 * _frameNumber;
+        const uint64_t i = CAMERA_DEFINITION_SIZE * _frameNumber;
         // Camera position
         CameraDefinition cd;
         const auto &ci = _exportFramesToDiskPayload.cameraInformation;
@@ -103,20 +102,25 @@ void MediaMakerPlugin::preRender()
 
         // Animation parameters
         const auto &ai = _exportFramesToDiskPayload.animationInformation;
-        _api->getParametersManager().getAnimationParameters().setFrame(ai[_frameNumber]);
+        if (!ai.empty())
+            _api->getParametersManager().getAnimationParameters().setFrame(ai[_frameNumber]);
     }
 }
 
 void MediaMakerPlugin::postRender()
 {
     ++_accumulationFrameNumber;
-    if (_exportFramesToDiskDirty && _accumulationFrameNumber == _exportFramesToDiskPayload.spp)
+
+    if (_exportFramesToDiskDirty)
     {
         _doExportFrameToDisk();
-        ++_frameNumber;
-        _accumulationFrameNumber = 0;
-        _exportFramesToDiskDirty =
-            (_frameNumber < (_exportFramesToDiskPayload.animationInformation.size() - _exportFramesToDiskPayload.startFrame));
+        if (_accumulationFrameNumber == _exportFramesToDiskPayload.spp)
+        {
+            ++_frameNumber;
+            _accumulationFrameNumber = 0;
+            const size_t nbFrames = _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE;
+            _exportFramesToDiskDirty = (_frameNumber < nbFrames);
+        }
     }
 }
 
@@ -172,7 +176,6 @@ CameraDefinition MediaMakerPlugin::_getCamera()
 
 void MediaMakerPlugin::_doExportFrameToDisk()
 {
-    PLUGIN_WARN << "MediaMakerPlugin::_doExportFrameToDisk" << std::endl;
     auto &frameBuffer = _api->getEngine().getFrameBuffer();
     auto image = frameBuffer.getImage();
     auto fif =
@@ -218,9 +221,11 @@ void MediaMakerPlugin::_exportFramesToDisk(const ExportFramesToDisk &payload)
     _accumulationFrameNumber = 0;
     auto &frameBuffer = _api->getEngine().getFrameBuffer();
     frameBuffer.clear();
+    const size_t nbFrames =
+        _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE - _exportFramesToDiskPayload.startFrame;
     PLUGIN_INFO << "--------------------------------------------------------------------------------" << std::endl;
     PLUGIN_INFO << "Movie settings     :" << std::endl;
-    PLUGIN_INFO << "- Number of frames : " << payload.animationInformation.size() - payload.startFrame << std::endl;
+    PLUGIN_INFO << "- Number of frames : " << nbFrames << std::endl;
     PLUGIN_INFO << "- Samples per pixel: " << payload.spp << std::endl;
     PLUGIN_INFO << "- Frame size       : " << frameBuffer.getSize() << std::endl;
     PLUGIN_INFO << "- Export folder    : " << payload.path << std::endl;
@@ -232,8 +237,8 @@ FrameExportProgress MediaMakerPlugin::_getFrameExportProgress()
 {
     FrameExportProgress result;
     float percentage = 1.f;
-    const size_t totalNumberOfFrames =
-        (_exportFramesToDiskPayload.animationInformation.size() - _exportFramesToDiskPayload.startFrame) * _exportFramesToDiskPayload.spp;
+    const size_t nbFrames = _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE;
+    const size_t totalNumberOfFrames = nbFrames * _exportFramesToDiskPayload.spp;
 
     if (totalNumberOfFrames != 0)
     {
@@ -242,6 +247,7 @@ FrameExportProgress MediaMakerPlugin::_getFrameExportProgress()
     }
     result.progress = percentage;
     result.done = !_exportFramesToDiskDirty;
+    PLUGIN_DEBUG << "Percentage = " << result.progress << ", Done = " << (result.done ? "True" : "False") << std::endl;
     return result;
 }
 
