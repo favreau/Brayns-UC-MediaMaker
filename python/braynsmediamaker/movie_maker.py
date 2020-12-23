@@ -241,6 +241,7 @@ class MovieMaker:
         params['quality'] = 100
         params['spp'] = 1
         params['startFrame'] = 0
+        params['endFrame'] = 0
         params['exportIntermediateFrames'] = False
         params['animationInformation'] = []
         params['cameraInformation'] = []
