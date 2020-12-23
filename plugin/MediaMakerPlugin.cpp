@@ -126,8 +126,7 @@ void MediaMakerPlugin::postRender()
             _doExportFrameToDisk();
             ++_frameNumber;
             _accumulationFrameNumber = 0;
-            const size_t nbFrames = _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE;
-            _exportFramesToDiskDirty = (_frameNumber < nbFrames);
+            _exportFramesToDiskDirty = (_frameNumber < _exportFramesToDiskPayload.endFrame);
         }
     }
 }
@@ -229,15 +228,16 @@ void MediaMakerPlugin::_exportFramesToDisk(const ExportFramesToDisk &payload)
     _accumulationFrameNumber = 0;
     auto &frameBuffer = _api->getEngine().getFrameBuffer();
     frameBuffer.clear();
-    const size_t nbFrames =
-        _exportFramesToDiskPayload.cameraInformation.size() / CAMERA_DEFINITION_SIZE - _exportFramesToDiskPayload.startFrame;
+    const size_t nbFrames = _exportFramesToDiskPayload.endFrame - _exportFramesToDiskPayload.startFrame;
     PLUGIN_INFO << "--------------------------------------------------------------------------------" << std::endl;
-    PLUGIN_INFO << "Movie settings     :" << std::endl;
-    PLUGIN_INFO << "- Number of frames : " << nbFrames << std::endl;
-    PLUGIN_INFO << "- Samples per pixel: " << payload.spp << std::endl;
-    PLUGIN_INFO << "- Frame size       : " << frameBuffer.getSize() << std::endl;
-    PLUGIN_INFO << "- Export folder    : " << payload.path << std::endl;
-    PLUGIN_INFO << "- Start frame      : " << payload.startFrame << std::endl;
+    PLUGIN_INFO << "Movie settings               :" << std::endl;
+    PLUGIN_INFO << "- Samples per pixel          : " << payload.spp << std::endl;
+    PLUGIN_INFO << "- Frame size                 : " << frameBuffer.getSize() << std::endl;
+    PLUGIN_INFO << "- Export folder              : " << payload.path << std::endl;
+    PLUGIN_INFO << "- Export intermediate frames : " << (payload.exportIntermediateFrames ? "Yes" : "No") << std::endl;
+    PLUGIN_INFO << "- Start frame                : " << payload.startFrame << std::endl;
+    PLUGIN_INFO << "- End frame                  : " << payload.endFrame << std::endl;
+    PLUGIN_INFO << "- Number of frames           : " << nbFrames << std::endl;
     PLUGIN_INFO << "--------------------------------------------------------------------------------" << std::endl;
 }
 

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,7 @@ struct ExportFramesToDisk
     uint16_t quality{100};
     uint16_t spp{0};
     uint16_t startFrame{0};
+    uint16_t endFrame{std::numeric_limits<uint16_t>::max()};
     bool exportIntermediateFrames{false};
     std::vector<uint64_t> animationInformation;
     std::vector<double> cameraInformation;

@@ -26,5 +26,11 @@ mm.build_camera_path(
     smoothing_size=50)
 print(mm.get_nb_frames())
 
-mm.create_movie(
-    path='/tmp', size=[512,512], samples_per_pixel=16, start_frame=10, exportIntermediateFrames=False)
+mm.set_current_frame(10)
+mm.create_movie(path='/tmp', size=[512, 512], samples_per_pixel=16, start_frame=10, end_frame=20, exportIntermediateFrames=False)
+
+mm.set_current_frame(20)
+mm.create_snapshot(path='/tmp/test_20.png', size=[512, 512], samples_per_pixel=16, exportIntermediateFrames=True)
+
+mm.set_current_frame(30)
+mm.create_snapshot(path='/tmp/test_30.png', size=[512, 512], samples_per_pixel=16, exportIntermediateFrames=False)
