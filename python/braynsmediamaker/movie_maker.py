@@ -308,7 +308,9 @@ class MovieMaker:
         display(progress_widget)
 
         base_dir = os.path.dirname(path)
-        self.export_frames(path=base_dir, animation_frames=animation_frames, size=size, samples_per_pixel=samples_per_pixel)
+        self.export_frames(
+            path=base_dir, animation_frames=animation_frames, size=size,
+            samples_per_pixel=samples_per_pixel, exportIntermediateFrames=exportIntermediateFrames)
 
         done = False
         while not done:
